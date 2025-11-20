@@ -1,14 +1,19 @@
-# Create .gitignore file
-@"
-# Ignore all contents in data folder except .gitkeep
+
+# Data and models
 data/*
 !data/.gitkeep
 !data/README.md
-
-# Ignore all contents in models folder except .gitkeep
 models/*
 !models/.gitkeep
 !models/README.md
+
+# Results, logs, figures
+results/*
+!results/.gitkeep
+logs/*
+!logs/.gitkeep
+figures/*
+!figures/.gitkeep
 
 # Python cache
 __pycache__/
@@ -27,6 +32,8 @@ __pycache__/
 venv/
 env/
 .venv
+environment.yml
+pyproject.toml
 
 # Jupyter
 .ipynb_checkpoints

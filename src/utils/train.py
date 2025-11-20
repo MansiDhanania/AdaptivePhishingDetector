@@ -6,56 +6,92 @@ from torch.utils.data import DataLoader, TensorDataset, random_split
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class FrozenBERTClassifier(nn.Module):
-    """Simple MLP classifier over BERT embeddings"""
-    def __init__(self, input_dim=768, hidden_dim=256, num_classes=2):
-        super(FrozenBERTClassifier, self).__init__()
+    """
+    Simple MLP classifier over BERT embeddings.
+    Args:
+        input_dim (int): Input embedding dimension.
+        hidden_dim (int): Hidden layer dimension.
+        num_classes (int): Number of output classes.
+    """
+    def __init__(self, input_dim: int = 768, hidden_dim: int = 256, num_classes: int = 2):
+        super().__init__()
         self.classifier = nn.Sequential(
             nn.Linear(input_dim, hidden_dim),
             nn.ReLU(),
             nn.Dropout(0.2),
             nn.Linear(hidden_dim, num_classes)
         )
-    
-    def forward(self, x):
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward pass."""
         return self.classifier(x)
 
-def create_dataloaders(X, Y, batch_size=32, val_ratio=0.15, test_ratio=0.15):
-    """Create train, validation, and test dataloaders"""
-    dataset = TensorDataset(X, Y)
-    total_size = len(dataset)
-    val_size = int(val_ratio * total_size)
-    test_size = int(test_ratio * total_size)
-    train_size = total_size - val_size - test_size
-    
-    train_ds, val_ds, test_ds = random_split(dataset, [train_size, val_size, test_size])
-    
-    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_ds, batch_size=64, shuffle=False)
-    test_loader = DataLoader(test_ds, batch_size=64, shuffle=False)
-    
-    return train_loader, val_loader, test_loader
+def create_dataloaders(
+    X: torch.Tensor,
+    Y: torch.Tensor,
+    batch_size: int = 32,
+    val_ratio: float = 0.15,
+    test_ratio: float = 0.15
+) -> tuple:
+    """
+    Create train, validation, and test dataloaders.
+    Args:
+        X (torch.Tensor): Features.
+        Y (torch.Tensor): Labels.
+        batch_size (int): Batch size for training.
+        val_ratio (float): Validation split ratio.
+        test_ratio (float): Test split ratio.
+    Returns:
+        tuple: train_loader, val_loader, test_loader
+    """
+    try:
+        dataset = TensorDataset(X, Y)
+        total_size = len(dataset)
+        val_size = int(val_ratio * total_size)
+        test_size = int(test_ratio * total_size)
+        train_size = total_size - val_size - test_size
+        train_ds, val_ds, test_ds = random_split(dataset, [train_size, val_size, test_size])
+        train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
+        val_loader = DataLoader(val_ds, batch_size=64, shuffle=False)
+        test_loader = DataLoader(test_ds, batch_size=64, shuffle=False)
+        return train_loader, val_loader, test_loader
+    except Exception as e:
+        raise RuntimeError(f"Error creating dataloaders: {e}")
 
-def train_frozen_bert(model, dataloader, optimizer, train_losses):
-    """Training loop for FrozenBERT"""
+import time
+def train_frozen_bert(
+    model: nn.Module,
+    dataloader: DataLoader,
+    optimizer: torch.optim.Optimizer,
+    train_losses: list
+) -> float:
+    """
+    Training loop for FrozenBERT.
+    Args:
+        model (nn.Module): Model to train.
+        dataloader (DataLoader): Training data loader.
+        optimizer (Optimizer): Optimizer.
+        train_losses (list): List to append training losses.
+    Returns:
+        float: Average training loss.
+    """
     model.train()
     total_loss = 0
     loss_fn = nn.CrossEntropyLoss()
-    
+    start_time = time.time()
     for batch in dataloader:
         embeddings, labels = [x.to(device) for x in batch]
-        
         optimizer.zero_grad()
         outputs = model(embeddings)
         loss = loss_fn(outputs, labels)
         loss.backward()
         optimizer.step()
-        
         total_loss += loss.item()
-    
     avg_loss = total_loss / len(dataloader)
     train_losses.append(avg_loss)
-    print(f"Training Loss: {avg_loss:.4f}")
-    
+    elapsed = time.time() - start_time
+    if elapsed > 2.0:
+        print(f"[Profiling] Training loop took {elapsed:.2f} seconds for {len(dataloader)} batches.")
     return avg_loss
 
 def train_bert_model(data_path, epochs=10, learning_rate=5e-5, save_path='models/frozen_bert.pth'):
@@ -77,7 +113,7 @@ def train_bert_model(data_path, epochs=10, learning_rate=5e-5, save_path='models
     
     # Training loop
     for epoch in range(epochs):
-        print(f"\n=== Epoch {epoch+1}/{epochs} ===")
+        # ...existing code...
         train_frozen_bert(model, train_loader, optimizer, train_losses)
         
         # Validation
@@ -87,7 +123,7 @@ def train_bert_model(data_path, epochs=10, learning_rate=5e-5, save_path='models
     
     # Save model
     torch.save(model.state_dict(), save_path)
-    print(f"\nModel saved to {save_path}")
+    # ...existing code...
     
     return model, train_loader, val_loader, test_loader
 
