@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phishing Email Detector</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .container {
+            border: 1px solid #ddd;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .upload-area {
+            border: 2px dashed #ccc;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+        .phishing {
+            background-color: #ffebee;
+            border-left: 4px solid #f44336;
+        }
+        .legitimate {
+            background-color: #e8f5e9;
+            border-left: 4px solid #4caf50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔒 Phishing Email Detector</h1>
+        <p>Upload a PDF of an email to check if it's a phishing attempt</p>
+        
+        <div class="upload-area">
+            <input type="file" id="fileInput" accept=".pdf">
+            <br><br>
+            <button onclick="uploadFile()">Analyze Email</button>
+        </div>
+        
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        async function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const resultDiv = document.getElementById('result');
+            
+            if (!fileInput.files[0]) {
+                alert('Please select a PDF file');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            
+            resultDiv.style.display = 'none';
+            resultDiv.innerHTML = '<p>Analyzing...</p>';
+            resultDiv.style.display = 'block';
+            
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    resultDiv.innerHTML = `<p><strong>Error:</strong> ${data.error}</p>`;
+                } else {
+                    const className = data.prediction === 'Phishing' ? 'phishing' : 'legitimate';
+                    resultDiv.className = 'result ' + className;
+                    
+                    resultDiv.innerHTML = `
+                        <h2>Result: ${data.prediction}</h2>
+                        <p><strong>Confidence:</strong> ${data.confidence.toFixed(2)}%</p>
+                        <hr>
+                        <p><strong>Probability Breakdown:</strong></p>
+                        <p>Legitimate: ${data.probabilities.legitimate.toFixed(2)}%</p>
+                        <p>Phishing: ${data.probabilities.phishing.toFixed(2)}%</p>
+                    `;
+                }
+                
+                resultDiv.style.display = 'block';
+            } catch (error) {
+                resultDiv.innerHTML = `<p><strong>Error:</strong> ${error.message}</p>`;
+                resultDiv.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>

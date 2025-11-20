@@ -1,0 +1,43 @@
+# Create .gitignore file
+@"
+# Ignore all contents in data folder except .gitkeep
+data/*
+!data/.gitkeep
+!data/README.md
+
+# Ignore all contents in models folder except .gitkeep
+models/*
+!models/.gitkeep
+!models/README.md
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Model files
+*.pth
+*.pkl
+*.h5
+
+# Data files
+*.csv
+
+# Virtual environments
+venv/
+env/
+.venv
+
+# Jupyter
+.ipynb_checkpoints
+
+# IDE
+.vscode/
+.idea/
+
+# Flask uploads
+app/uploads/
+
+# OS files
+.DS_Store
+"@ | Out-File -FilePath .gitignore -Encoding utf8
