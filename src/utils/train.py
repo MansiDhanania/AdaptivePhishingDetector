@@ -59,11 +59,16 @@ def create_dataloaders(
         raise RuntimeError(f"Error creating dataloaders: {e}")
 
 import time
+def get_device():
+    """Return the best available device (GPU if available, else CPU)."""
+    return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 def train_frozen_bert(
     model: nn.Module,
     dataloader: DataLoader,
     optimizer: torch.optim.Optimizer,
-    train_losses: list
+    train_losses: list,
+    device=None
 ) -> float:
     """
     Training loop for FrozenBERT.
@@ -75,6 +80,8 @@ def train_frozen_bert(
     Returns:
         float: Average training loss.
     """
+    if device is None:
+        device = get_device()
     model.train()
     total_loss = 0
     loss_fn = nn.CrossEntropyLoss()
@@ -94,37 +101,30 @@ def train_frozen_bert(
         print(f"[Profiling] Training loop took {elapsed:.2f} seconds for {len(dataloader)} batches.")
     return avg_loss
 
-def train_bert_model(data_path, epochs=10, learning_rate=5e-5, save_path='models/frozen_bert.pth'):
+def train_bert_model(data_path, epochs=10, learning_rate=5e-5, save_path='models/frozen_bert.pth', device=None):
     """Main training function"""
+    if device is None:
+        device = get_device()
     # Load pre-computed embeddings (you need to generate these first)
     data = torch.load(data_path)
-    X = data['embeddings']
-    Y = data['labels']
-    
+    X = torch.tensor(data['embeddings']).to(device)
+    Y = torch.tensor(data['labels']).to(device)
     # Create dataloaders
-    train_loader, val_loader, test_loader = create_dataloaders(X, Y)
-    
+    train_loader, val_loader, test_loader = create_dataloaders(X, Y, device=device)
     # Initialize model
     model = FrozenBERTClassifier().to(device)
     optimizer = AdamW(model.parameters(), lr=learning_rate)
-    
     train_losses = []
     val_accuracies = []
-    
     # Training loop
     for epoch in range(epochs):
-        # ...existing code...
-        train_frozen_bert(model, train_loader, optimizer, train_losses)
-        
+        train_frozen_bert(model, train_loader, optimizer, train_losses, device=device)
         # Validation
         from evaluate import evaluate_accuracy
-        val_acc = evaluate_accuracy(model, val_loader)
+        val_acc = evaluate_accuracy(model, val_loader, device=device)
         val_accuracies.append(val_acc)
-    
     # Save model
     torch.save(model.state_dict(), save_path)
-    # ...existing code...
-    
     return model, train_loader, val_loader, test_loader
 
 if __name__ == "__main__":

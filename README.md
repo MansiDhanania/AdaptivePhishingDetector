@@ -1,81 +1,131 @@
 
 # AdaptivePhishingDetector
-A reinforcement learning-enhanced phishing email detection system, designed to address the evolving challenges of adversarial spam and class imbalance in real-world email environments.
 
-## Project Overview
-This repository demonstrates that a DQN-based reinforcement learning program for fine-tuning BERT (a small LLM) improves phishing email detection compared to:
-- Baseline models (Random Forest, XGBoost)
-- Simple BERT training on a dataset
+## Project Summary
+AdaptivePhishingDetector is an industrial-grade, modular pipeline for phishing email detection using reinforcement learning (DQN) to fine-tune BERT. The system is designed for robust generalization to adversarial and imbalanced email datasets, and includes a web app for real-world deployment.
 
-The DQN+BERT approach is designed to generalize better to new/unseen phishing instances, even if not trained on those specific data distributions.
+## Key Features
+- Modular RL pipeline for BERT fine-tuning (DQN+BERT)
+- Baseline models (Random Forest, XGBoost) for benchmarking
+- Flexible data preprocessing and experiment configuration
+- CLI-driven workflow for reproducibility
+- Web app for interactive phishing detection (PDF/text input)
+- GPU/CPU compatibility throughout
 
-## Datasets
-- `phishing_email.csv`: Combines 6 popular phishing datasets (including CEAS, Ling, SpamAssassin)
-- `CEAS_08.csv`, `Ling.csv`, `SpamAssasin.csv`: Individual datasets for cross-dataset evaluation
+## Directory Structure
+```
+environment.yml         # Conda environment (recommended)
+README.md              # Project documentation
+SETUP.md               # Setup instructions
+app/                   # Flask web app
+  app.py
+  index.html
+  requirements.txt
+data/                  # Raw CSV datasets
+  CEAS_08.csv
+  Ling.csv
+  phishing_email.csv
+  SpamAssasin.csv
+docs/                  # Documentation
+models/                # Saved models and BERT embeddings (.pt)
+results/               # Experiment results, metrics, plots
+src/                   # Core logic and experiment runner
+  run_experiments.py
+  utils/
+	baseline_models.py
+	dqn_finetune.py
+	evaluate.py
+	phishing_predictor.py
+	preprocessing.py
+	train.py
+```
 
-## Modular Experiment Pipeline
-All experiments are run via `src/run_experiments.py`. You can flexibly specify which dataset to use for training and which for evaluation.
 
-### How to Run Experiments
-1. **Baselines (RF, XGBoost):**
-	- Trains on one dataset, evaluates on another
-2. **Frozen BERT Classifier:**
-	- Trains on BERT embeddings, evaluates on another dataset
-3. **DQN+BERT Fine-tuning:**
-	- Trains with RL agent, evaluates on another dataset
+## Quickstart: End-to-End Workflow
+
+### 1. Environment Setup
+
+**Recommended:**
+```powershell
+conda env create -f environment.yml
+conda activate <your_env_name>
+```
+Or (if using pip):
+```powershell
+pip install -r app/requirements.txt
+```
+
+### 2. Data Preprocessing: CSV → BERT Embeddings
+
+Convert raw CSVs to BERT `.pt` embeddings for model training:
+```powershell
+python src/utils/preprocessing.py --input data/phishing_email.csv --output models/phishing_email_bert_embeddings.pt
+```
+Repeat for other datasets as needed.
+
+### 3. Training & Evaluation Scenarios
+
+You can now run training, evaluation, or both, and results will be saved in separate folders for easy comparison:
+
+#### Train Only
+```powershell
+python src/run_experiments.py --mode dqn --train models/phishing_email_bert_embeddings.pt --train_only --results results
+```
+Results saved in `results/train_only/`
+
+#### Eval Only (with a previously trained model)
+```powershell
+python src/run_experiments.py --mode dqn --eval models/phishing_email_bert_embeddings.pt --eval_only --results results
+```
+Results saved in `results/eval_only/`
+
+#### Train and Eval (default)
+```powershell
+python src/run_experiments.py --mode dqn --train models/phishing_email_bert_embeddings.pt --eval models/phishing_email_bert_embeddings.pt --results results
+```
+Results saved in `results/train_and_eval/`
+
+### 4. Run the Web App
+
+Start the Flask app for interactive phishing detection:
+```powershell
+python app/app.py
+```
+Visit `http://localhost:5000` in your browser. Upload a PDF or text email to get predictions and confidence scores.
+
+---
 
 
-#### CLI Usage
-Run any experiment from the command line:
-```bash
+## Advanced Usage: Baselines, Evaluation & Custom Experiments
+
+Run baseline models, custom splits, or evaluate a previously trained model:
+```powershell
 # Baselines (Random Forest, XGBoost)
 python src/run_experiments.py --mode baselines --train data/phishing_email.csv --eval data/CEAS_08.csv
 
 # Frozen BERT
 python src/run_experiments.py --mode bert --train models/phishing_email_bert_embeddings.pt --eval models/CEAS_bert_embeddings.pt
 
-# DQN+BERT
-python src/run_experiments.py --mode dqn --train models/phishing_email_bert_embeddings.pt --eval models/CEAS_bert_embeddings.pt
+# Evaluate a previously trained DQN+BERT model
+# (Use the same .pt file for --train if you only want to load weights and skip retraining)
+python src/run_experiments.py --mode dqn --train models/phishing_email_bert_embeddings.pt --eval models/CEAS_bert_embeddings.pt --results results
 ```
-Results and logs are saved in the `results/` and `logs/` folders.
+Results and logs are saved in `results/` and `logs/`.
 
-You can modify the script to use any dataset split.
+**Note:**
+- The script will load the saved model weights and run evaluation on the specified dataset.
+- If you only want to evaluate (not retrain), ensure the script logic supports loading the model and skipping training. If not, add a flag or modify the script to only run evaluation.
 
+## Technical Notes
+- All scripts support GPU/CPU automatically
+- Modular codebase for easy extension and reproducibility
+- Results, metrics, and plots are saved for every run
+- See `docs/` for model card, API details, and reproducibility checklist
 
-### Evaluation & Plots
-- Classification report, confusion matrix, Matthews correlation coefficient
-- ROC and Precision-Recall curves for each model (saved in `results/`)
-- Experiment logs saved in `logs/`
+## Troubleshooting
+- Ensure all dependencies are installed (see above)
+- If you encounter CUDA/CPU errors, check your PyTorch installation and device availability
+- For dataset errors, verify CSV format and column names (`text_combined`, `label`)
 
-
-## Interactive Demo (Web App)
-The Flask web app allows you to upload PDF/email files and get phishing predictions with confidence scores.
-
-### How to Run the Web App
-1. Install dependencies:
-	```bash
-	pip install -r app/requirements.txt
-	```
-2. Start the app:
-	```bash
-	python app/app.py
-	```
-3. Open your browser and go to `http://localhost:5000`.
-4. Upload a PDF/email and view the prediction and confidence score.
-
-## Deployment
-All code is modular. You can remove the original notebook (`ECSE555_FinalProjectCode_AllData.ipynb`) once satisfied.
-
-
-## Directory Structure
-- `src/`: Core logic and experiment runner
-- `src/utils/`: Model, training, RL, evaluation, and preprocessing modules
-	- `data/`: Raw and processed datasets
-	- `models/`: Saved models and BERT embeddings
-- `results/`: Experiment results, metrics, and figures
-- `logs/`: Experiment logs
-- `docs/`: Documentation
-- `app/`: Web demo (Flask app)
-
-## Reproducibility
-You can easily swap datasets for training/evaluation to demonstrate generalization and robustness.
+## Citation & Contact
+For academic or industrial use, please cite this repository or contact the maintainer via GitHub.

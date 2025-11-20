@@ -105,12 +105,6 @@ def evaluate_model(
         'mcc': mcc,
         'confusion_matrix': cm
     }
-            probs = torch.softmax(outputs, dim=1)[:, 1].cpu().numpy()
-            preds = torch.argmax(outputs, dim=1).cpu().numpy()
-            all_preds.extend(preds)
-            all_labels.extend(labels.cpu().numpy())
-            all_probs.extend(probs)
-    # Classification report
     # ...existing code...
     # Matthews Correlation Coefficient
     mcc = matthews_corrcoef(all_labels, all_preds)

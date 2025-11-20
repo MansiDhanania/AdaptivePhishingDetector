@@ -3,7 +3,9 @@ import torch.nn as nn
 import PyPDF2
 import io
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+def get_device():
+    """Return the best available device (GPU if available, else CPU)."""
+    return torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def extract_text_from_pdf(pdf_path: str) -> str:
     """
@@ -25,7 +27,7 @@ def extract_text_from_pdf(pdf_path: str) -> str:
         print(f"Error extracting text from PDF: {e}")
     return text
 
-def load_trained_model(model_path: str, model_class: nn.Module) -> nn.Module:
+def load_trained_model(model_path: str, model_class: nn.Module, device=None) -> nn.Module:
     """
     Load a trained model from disk.
     Args:
@@ -35,6 +37,8 @@ def load_trained_model(model_path: str, model_class: nn.Module) -> nn.Module:
         nn.Module: Loaded model.
     """
     try:
+        if device is None:
+            device = get_device()
         model = model_class().to(device)
         model.load_state_dict(torch.load(model_path, map_location=device))
         model.eval()
@@ -44,7 +48,7 @@ def load_trained_model(model_path: str, model_class: nn.Module) -> nn.Module:
 
 import time
 from typing import Any, Dict
-def predict_phishing(pdf_path_or_text: Any, model: nn.Module, tokenizer=None) -> Dict[str, Any]:
+def predict_phishing(pdf_path_or_text: Any, model: nn.Module, tokenizer=None, device=None) -> Dict[str, Any]:
     """
     Predict if an email is phishing.
     Args:
@@ -54,6 +58,8 @@ def predict_phishing(pdf_path_or_text: Any, model: nn.Module, tokenizer=None) ->
     Returns:
         dict: Prediction results.
     """
+    if device is None:
+        device = get_device()
     start_time = time.time()
     if isinstance(pdf_path_or_text, str) and pdf_path_or_text.lower().endswith('.pdf'):
         text = extract_text_from_pdf(pdf_path_or_text)
@@ -65,7 +71,7 @@ def predict_phishing(pdf_path_or_text: Any, model: nn.Module, tokenizer=None) ->
     inputs = tokenizer(text, return_tensors='pt', truncation=True, max_length=512)
     inputs = {k: v.to(device) for k, v in inputs.items()}
     with torch.no_grad():
-        outputs = model(inputs['input_ids'])
+        outputs = model(inputs['input_ids'].to(device))
         probs = torch.softmax(outputs, dim=1)
         pred = torch.argmax(probs, dim=1).item()
         confidence = probs[0, pred].item() * 100

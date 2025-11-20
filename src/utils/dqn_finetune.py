@@ -86,8 +86,8 @@ def train_with_dqn(model, train_loader, val_loader, epochs=10):
     action_history = []
     reward_history = []
     
-    from train import train_frozen_bert
-    from evaluate import evaluate_accuracy
+    from .train import train_frozen_bert
+    from .evaluate import evaluate_accuracy
     import torch.optim as optim
     
     optimizer = optim.AdamW(model.parameters(), lr=5e-5)

@@ -4,6 +4,10 @@ from transformers import BertTokenizer
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+def get_device():
+    """Return the best available device (GPU if available, else CPU)."""
+    return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 def load_data(csv_path: str) -> tuple:
     """
     Load and preprocess the phishing email dataset.
@@ -36,6 +40,7 @@ def get_bert_embeddings(texts: list, model_name: str = 'bert-base-uncased', batc
     from transformers import BertTokenizer, BertModel
     tokenizer = BertTokenizer.from_pretrained(model_name)
     model = BertModel.from_pretrained(model_name)
+    device = get_device()
     model.to(device)
     embeddings = []
     for i in range(0, len(texts), batch_size):
@@ -44,6 +49,6 @@ def get_bert_embeddings(texts: list, model_name: str = 'bert-base-uncased', batc
         inputs = {k: v.to(device) for k, v in inputs.items()}
         with torch.no_grad():
             outputs = model(**inputs)
-            batch_embeds = outputs.last_hidden_state[:, 0, :].cpu()
+            batch_embeds = outputs.last_hidden_state[:, 0, :].to('cpu')
             embeddings.append(batch_embeds)
     return torch.cat(embeddings)

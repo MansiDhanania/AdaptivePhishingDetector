@@ -1,7 +1,11 @@
+
 """
 Run experiments for baseline models, BERT, and DQN+BERT.
 Allows flexible train/eval dataset selection and generates evaluation plots.
 """
+import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import torch
 from src.utils.baseline_models import train_baseline_models, save_baseline_models
 from src.utils.train import train_bert_model, FrozenBERTClassifier, create_dataloaders
@@ -11,8 +15,6 @@ from src.utils.preprocessing import load_data
 from sklearn.metrics import classification_report, roc_curve, auc, precision_recall_curve
 import numpy as np
 import argparse
-import os
-import sys
 import logging
 
 # Baseline models: RF and XGBoost
@@ -96,21 +98,81 @@ def run_dqn(train_pt, eval_pt, save_dir="results"):
 def main():
     parser = argparse.ArgumentParser(description="Run phishing detection experiments.")
     parser.add_argument("--mode", choices=["baselines", "bert", "dqn"], required=True, help="Experiment type to run.")
-    parser.add_argument("--train", required=True, help="Training dataset (csv or pt)")
-    parser.add_argument("--eval", required=True, help="Evaluation dataset (csv or pt)")
+    parser.add_argument("--train", help="Training dataset (csv or pt)")
+    parser.add_argument("--eval", help="Evaluation dataset (csv or pt)")
     parser.add_argument("--results", default="results", help="Directory to save results")
     parser.add_argument("--logs", default="logs", help="Directory to save logs")
+    parser.add_argument("--train_only", action="store_true", help="Train only, do not evaluate.")
+    parser.add_argument("--eval_only", action="store_true", help="Evaluate only, do not train.")
+    parser.add_argument("--train_and_eval", action="store_true", help="Train and evaluate (default behavior).")
     args = parser.parse_args()
-    # Setup logging
+
+    # Determine results folder
+    if args.train_only:
+        results_dir = os.path.join(args.results, "train_only")
+    elif args.eval_only:
+        results_dir = os.path.join(args.results, "eval_only")
+    else:
+        results_dir = os.path.join(args.results, "train_and_eval")
+
     os.makedirs(args.logs, exist_ok=True)
+    os.makedirs(results_dir, exist_ok=True)
     logging.basicConfig(filename=os.path.join(args.logs, f"{args.mode}_experiment.log"), level=logging.INFO)
     logging.info(f"Running {args.mode} experiment: train={args.train}, eval={args.eval}")
+
+    # Baselines
     if args.mode == "baselines":
-        run_baselines(args.train, args.eval, save_dir=args.results, log_dir=args.logs)
+        if args.train_only:
+            # Train and save model only
+            X_train, Y_train = load_data(args.train)
+            results = train_baseline_models(X_train, Y_train)
+            save_baseline_models(results)
+        elif args.eval_only:
+            # Only evaluate (requires model and eval data)
+            X_eval, Y_eval = load_data(args.eval)
+            # Load models and vectorizer from disk (implement as needed)
+            # ...existing code...
+            pass
+        else:
+            run_baselines(args.train, args.eval, save_dir=results_dir, log_dir=args.logs)
+    # BERT
     elif args.mode == "bert":
-        run_bert(args.train, args.eval, save_dir=args.results)
+        if args.train_only:
+            model, train_loader, val_loader, test_loader = train_bert_model(args.train)
+            torch.save(model.state_dict(), os.path.join(results_dir, "bert_model.pth"))
+        elif args.eval_only:
+            eval_data = torch.load(args.eval)
+            X_eval, Y_eval = eval_data['embeddings'], eval_data['labels']
+            model = FrozenBERTClassifier()
+            model.load_state_dict(torch.load(os.path.join(results_dir, "bert_model.pth")))
+            _, _, test_loader = create_dataloaders(X_eval, Y_eval)
+            probs, preds, labels = evaluate_model(model, test_loader, "FrozenBERT", return_probs=True)
+            report = classification_report(labels, preds)
+            with open(os.path.join(results_dir, "bert_classification_report.txt"), "w") as f:
+                f.write(report)
+        else:
+            run_bert(args.train, args.eval, save_dir=results_dir)
+    # DQN+BERT
     elif args.mode == "dqn":
-        run_dqn(args.train, args.eval, save_dir=args.results)
+        if args.train_only:
+            data = torch.load(args.train)
+            X, Y = data['embeddings'], data['labels']
+            train_loader, val_loader, test_loader = create_dataloaders(X, Y)
+            model = FrozenBERTClassifier().to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
+            model, _, _ = train_with_dqn(model, train_loader, val_loader)
+            torch.save(model.state_dict(), os.path.join(results_dir, "dqn_bert_model.pth"))
+        elif args.eval_only:
+            eval_data = torch.load(args.eval)
+            X_eval, Y_eval = eval_data['embeddings'], eval_data['labels']
+            model = FrozenBERTClassifier()
+            model.load_state_dict(torch.load(os.path.join(results_dir, "dqn_bert_model.pth")))
+            _, _, test_loader_eval = create_dataloaders(X_eval, Y_eval)
+            probs, preds, labels = evaluate_model(model, test_loader_eval, "DQN+BERT", return_probs=True)
+            report = classification_report(labels, preds)
+            with open(os.path.join(results_dir, "dqn_bert_classification_report.txt"), "w") as f:
+                f.write(report)
+        else:
+            run_dqn(args.train, args.eval, save_dir=results_dir)
     else:
         print("Invalid mode.")
         sys.exit(1)
