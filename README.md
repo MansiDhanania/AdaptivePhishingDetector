@@ -99,12 +99,12 @@ Results saved in `results/train_only/`, `results/eval_only/`, or `results/train_
 
 #### Frozen BERT Classifier
 
-**Train and evaluate:**
+Train and evaluate:
 ```powershell
 python src/run_experiments.py --mode bert --train models/phishing_email_bert_embeddings.pt --eval models/ceas_bert_embeddings.pt --results results
 ```
 
-**Train only:**
+Train only:
 ```powershell
 python src/run_experiments.py --mode bert --train models/phishing_email_bert_embeddings.pt --train_only --results results
 ```
