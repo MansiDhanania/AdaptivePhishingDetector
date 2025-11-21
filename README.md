@@ -1,4 +1,3 @@
-
 # AdaptivePhishingDetector
 
 AdaptivePhishingDetector is a modular pipeline for phishing email detection using reinforcement learning (DQN) to fine-tune BERT. The system is designed for robust generalization to adversarial and imbalanced email datasets, and includes a web app for real-world deployment.
@@ -11,57 +10,48 @@ AdaptivePhishingDetector is a modular pipeline for phishing email detection usin
 - Web app for interactive phishing detection (PDF/text input)
 - GPU/CPU compatibility throughout
 
-environment.yml         # Conda environment (recommended)
-README.md              # Project documentation
-SETUP.md               # Setup instructions
-data/                  # Raw CSV datasets
-  CEAS_08.csv
-  Ling.csv
-  phishing_email.csv
-  SpamAssasin.csv
-docs/                  # Documentation
-
 ## Directory Structure
-```
-environment.yml         # Conda environment (recommended)
-README.md               # Project documentation
-SETUP.md                # Setup instructions
-app/                    # Flask web app
-  app.py
-  requirements.txt
-  templates/
-    index.html
-data/                   # Raw CSV datasets
-  CEAS_08.csv
-  Ling.csv
-  phishing_email.csv
-  SpamAssasin.csv
-docs/                    # Documentation
-  api_utils.md
-  model_card.md
-  reproducibility_checklist.md
-  virtualenv_setup.md
-models/                  # Saved models and BERT embeddings (.pt)
-  ceas_bert_embeddings.pt
-  dqn_finetuned_bert.pth
-  ling_bert_embeddings.pt
-  phishing_email_bert_embeddings.pt
-  spamassasin_bert_embeddings.pt
-results/                 # Experiment results, metrics, plots
-  dqn_bert_classification_report.txt
-  results.md
-  train_only/
-  eval_only/
-  train_and_eval/
-src/                     # Core logic and experiment runner
-  run_experiments.py
-  utils/
-    baseline_models.py
-    dqn_finetune.py
-    evaluate.py
-    phishing_predictor.py
-    preprocessing.py
-    train.py
+```text
+AdaptivePhishingDetector/
+├── environment.yml                # Conda environment (recommended)
+├── README.md                      # this file
+├── SETUP.md                       # Setup instructions
+├── app/                           # Flask web app
+│   ├── app.py
+│   ├── requirements.txt
+│   └── templates/
+│       └── index.html
+├── data/                          # Raw CSV datasets
+│   ├── CEAS_08.csv
+│   ├── Ling.csv
+│   ├── phishing_email.csv
+│   └── SpamAssasin.csv
+├── docs/                          # Documentation
+│   ├── api_utils.md
+│   ├── model_card.md
+│   ├── reproducibility_checklist.md
+│   └── virtualenv_setup.md
+├── models/                        # Saved models and BERT embeddings (.pt)
+│   ├── ceas_bert_embeddings.pt
+│   ├── dqn_finetuned_bert.pth
+│   ├── ling_bert_embeddings.pt
+│   ├── phishing_email_bert_embeddings.pt
+│   └── spamassasin_bert_embeddings.pt
+├── results/                       # Experiment results, metrics, plots
+│   ├── dqn_bert_classification_report.txt
+│   ├── results.md
+│   ├── train_only/
+│   ├── eval_only/
+│   └── train_and_eval/
+├── src/                           # Core logic and experiment runner
+│   ├── run_experiments.py
+│   └── utils/
+│       ├── baseline_models.py
+│       ├── dqn_finetune.py
+│       ├── evaluate.py
+│       ├── phishing_predictor.py
+│       ├── preprocessing.py
+│       └── train.py
 ```
 
 
@@ -127,41 +117,3 @@ Results saved in `results/train_only/`, `results/eval_only/`, or `results/train_
 
 - All results (classification reports, plots, model weights) are saved in the specified results subfolder for each run.
 - Logs for each experiment are saved in the `logs/` directory.
-
-### 5. Run the Web App
-
-## Directory Structure
-```
-
-Start the Flask app for interactive phishing detection:
-```powershell
-python app/app.py
-```
-Visit `http://localhost:5000` in your browser. Upload a PDF or text email to get predictions and confidence scores.
-
----
-
-
-
-## Advanced Usage & Custom Experiments
-
-- You can mix and match any train/eval datasets for benchmarking generalization.
-- All experiment types (baselines, bert, dqn) support train only, eval only, or train+eval modes.
-- Results and logs are always saved in the appropriate subfolders for reproducibility.
-
-
-## Technical Notes
-- All scripts support GPU/CPU automatically
-- Modular codebase for easy extension and reproducibility
-- Results, metrics, and plots are saved for every run
-- See `docs/` for model card, API details, and reproducibility checklist
-
-
-## Troubleshooting
-- Ensure all dependencies are installed (see above)
-- If you encounter CUDA/CPU errors, check your PyTorch installation and device availability
-- For dataset errors, verify CSV format and column names (`text_combined`, `label`)
-
-
-## Citation & Contact
-For academic or industrial use, please cite this repository or contact the maintainer via GitHub.
