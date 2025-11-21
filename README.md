@@ -85,23 +85,15 @@ python src/run_experiments.py --mode baselines --eval data/CEAS_08.csv --eval_on
 Results saved in `results/train_only/`, `results/eval_only/`, or `results/train_and_eval/`.
 
 #### Frozen BERT Classifier
-Train and evaluate BERT:
-```powershell
 # Train and evaluate
 python src/run_experiments.py --mode bert --train models/phishing_email_bert_embeddings.pt --eval models/ceas_bert_embeddings.pt --results results
 # Train only
-python src/run_experiments.py --mode bert --train models/phishing_email_bert_embeddings.pt --train_only --results results
-# Eval only (requires previously saved model)
-python src/run_experiments.py --mode bert --eval models/ceas_bert_embeddings.pt --eval_only --results results
-```
 Results saved in `results/train_only/`, `results/eval_only/`, or `results/train_and_eval/`.
 
 #### DQN+BERT (RL Fine-Tuning)
 Train and evaluate DQN+BERT:
 ```powershell
 # Train and evaluate
-python src/run_experiments.py --mode dqn --train models/phishing_email_bert_embeddings.pt --eval models/ceas_bert_embeddings.pt --results results
-# Train only
 python src/run_experiments.py --mode dqn --train models/phishing_email_bert_embeddings.pt --train_only --results results
 # Eval only (requires previously saved model)
 python src/run_experiments.py --mode dqn --eval models/ceas_bert_embeddings.pt --eval_only --results results
@@ -114,6 +106,9 @@ Results saved in `results/train_only/`, `results/eval_only/`, or `results/train_
 - Logs for each experiment are saved in the `logs/` directory.
 
 ### 5. Run the Web App
+
+## Directory Structure
+```
 
 Start the Flask app for interactive phishing detection:
 ```powershell
