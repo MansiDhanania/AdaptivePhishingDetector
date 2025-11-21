@@ -98,12 +98,21 @@ python src/run_experiments.py --mode baselines --eval data/CEAS_08.csv --eval_on
 Results saved in `results/train_only/`, `results/eval_only/`, or `results/train_and_eval/`.
 
 #### Frozen BERT Classifier
-# Train and evaluate
+
+**Train and evaluate:**
+```powershell
 python src/run_experiments.py --mode bert --train models/phishing_email_bert_embeddings.pt --eval models/ceas_bert_embeddings.pt --results results
-# Train only
+```
+
+**Train only:**
+```powershell
+python src/run_experiments.py --mode bert --train models/phishing_email_bert_embeddings.pt --train_only --results results
+```
+
 Results saved in `results/train_only/`, `results/eval_only/`, or `results/train_and_eval/`.
 
 #### DQN+BERT (RL Fine-Tuning)
+
 Train and evaluate DQN+BERT:
 ```powershell
 # Train and evaluate
