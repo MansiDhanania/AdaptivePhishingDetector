@@ -11,34 +11,57 @@ AdaptivePhishingDetector is a modular pipeline for phishing email detection usin
 - Web app for interactive phishing detection (PDF/text input)
 - GPU/CPU compatibility throughout
 
-## Directory Structure
-```
 environment.yml         # Conda environment (recommended)
 README.md              # Project documentation
 SETUP.md               # Setup instructions
-app/                   # Flask web app
-  app.py
-  index.html
-  requirements.txt
 data/                  # Raw CSV datasets
   CEAS_08.csv
   Ling.csv
   phishing_email.csv
   SpamAssasin.csv
 docs/                  # Documentation
+
 ## Directory Structure
 ```
-models/                # Saved models and BERT embeddings (.pt)
-results/               # Experiment results, metrics, plots
-src/                   # Core logic and experiment runner
+environment.yml         # Conda environment (recommended)
+README.md               # Project documentation
+SETUP.md                # Setup instructions
+app/                    # Flask web app
+  app.py
+  requirements.txt
+  templates/
+    index.html
+data/                   # Raw CSV datasets
+  CEAS_08.csv
+  Ling.csv
+  phishing_email.csv
+  SpamAssasin.csv
+docs/                    # Documentation
+  api_utils.md
+  model_card.md
+  reproducibility_checklist.md
+  virtualenv_setup.md
+models/                  # Saved models and BERT embeddings (.pt)
+  ceas_bert_embeddings.pt
+  dqn_finetuned_bert.pth
+  ling_bert_embeddings.pt
+  phishing_email_bert_embeddings.pt
+  spamassasin_bert_embeddings.pt
+results/                 # Experiment results, metrics, plots
+  dqn_bert_classification_report.txt
+  results.md
+  train_only/
+  eval_only/
+  train_and_eval/
+src/                     # Core logic and experiment runner
   run_experiments.py
   utils/
-	baseline_models.py
-	dqn_finetune.py
-	evaluate.py
-	phishing_predictor.py
-	preprocessing.py
-	train.py
+    baseline_models.py
+    dqn_finetune.py
+    evaluate.py
+    phishing_predictor.py
+    preprocessing.py
+    train.py
 ```
 
 
