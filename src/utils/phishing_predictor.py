@@ -65,53 +65,25 @@ def predict_phishing(pdf_path_or_text: Any, model: nn.Module, tokenizer=None, de
         text = extract_text_from_pdf(pdf_path_or_text)
     else:
         text = pdf_path_or_text
-    if tokenizer is None:
-        from transformers import BertTokenizer
-        tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-    inputs = tokenizer(text, return_tensors='pt', truncation=True, max_length=512)
-    inputs = {k: v.to(device) for k, v in inputs.items()}
-    with torch.no_grad():
-        outputs = model(inputs['input_ids'].to(device))
-        probs = torch.softmax(outputs, dim=1)
-        pred = torch.argmax(probs, dim=1).item()
-        confidence = probs[0, pred].item() * 100
-    elapsed = time.time() - start_time
-    if elapsed > 1.0:
-        print(f"[Profiling] Prediction took {elapsed:.2f} seconds.")
-    return {
-        'prediction': 'Spam' if pred == 1 else 'Non-Spam',
-        'confidence': confidence
-    }
-    if pdf_path_or_text.endswith('.pdf'):
-        text = extract_text_from_pdf(pdf_path_or_text)
-    else:
-        text = pdf_path_or_text
-    
+
     if not text.strip():
         return {"error": "No text extracted"}
-    
-    # Generate embedding (simplified - you need proper implementation)
-    # In production, use your existing embedding generation code
+
     from transformers import BertTokenizer, BertModel
-    
     if tokenizer is None:
         tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
         bert_model = BertModel.from_pretrained('bert-base-uncased').to(device)
-    
+
     # Tokenize and get embedding
-    inputs = tokenizer(text, return_tensors='pt', truncation=True, 
-                      max_length=512, padding=True).to(device)
-    
+    inputs = tokenizer(text, return_tensors='pt', truncation=True, max_length=512, padding=True)
+    inputs = {k: v.to(device) for k, v in inputs.items()}
     with torch.no_grad():
         bert_output = bert_model(**inputs)
         embedding = bert_output.last_hidden_state[:, 0, :]  # CLS token
-    
-    # Predict
-    with torch.no_grad():
         output = model(embedding)
         probs = torch.softmax(output, dim=1)
         prediction = torch.argmax(output, dim=1).item()
-    
+
     result = {
         "prediction": "Phishing" if prediction == 1 else "Legitimate",
         "confidence": probs[0][prediction].item() * 100,
@@ -120,7 +92,10 @@ def predict_phishing(pdf_path_or_text: Any, model: nn.Module, tokenizer=None, de
             "phishing": probs[0][1].item() * 100
         }
     }
-    
+
+    elapsed = time.time() - start_time
+    if elapsed > 1.0:
+        print(f"[Profiling] Prediction took {elapsed:.2f} seconds.")
     return result
 
 if __name__ == "__main__":

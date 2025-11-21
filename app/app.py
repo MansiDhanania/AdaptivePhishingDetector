@@ -1,17 +1,18 @@
 
-from flask import Flask, request, render_template, jsonify
+import os
 import sys
 import logging
-sys.path.append('..')
-
-from src.utils.phishing_predictor import predict_phishing, load_trained_model, extract_text_from_pdf
-from src.utils.train import FrozenBERTClassifier
-import os
-
+from flask import Flask, request, render_template, jsonify
+from flask_cors import CORS
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
+from utils.phishing_predictor import predict_phishing, load_trained_model, extract_text_from_pdf
+from utils.train import FrozenBERTClassifier
 
 app = Flask(__name__)
+CORS(app)
 app.config['UPLOAD_FOLDER'] = 'uploads/'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+
 
 # Setup logging
 logging.basicConfig(filename='logs/webapp.log', level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
@@ -19,8 +20,9 @@ logging.basicConfig(filename='logs/webapp.log', level=logging.INFO, format='%(as
 # Create upload folder if it doesn't exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-# Load model on startup
-MODEL_PATH = '../models/dqn_finetuned_bert.pth'
+
+# Load model on startup using a path relative to app.py
+MODEL_PATH = os.path.join(os.path.dirname(__file__), '..', 'models', 'dqn_finetuned_bert.pth')
 model = load_trained_model(MODEL_PATH, FrozenBERTClassifier)
 
 @app.route('/')
@@ -40,13 +42,20 @@ def predict():
         if file and file.filename.endswith('.pdf'):
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
             file.save(filepath)
+            result = None
             try:
                 result = predict_phishing(filepath, model)
             except Exception as pred_err:
                 logging.error(f'Prediction error: {pred_err}')
-                os.remove(filepath)
+                if os.path.exists(filepath):
+                    os.remove(filepath)
                 return jsonify({'error': f'Prediction error: {pred_err}'}), 500
-            os.remove(filepath)
+            finally:
+                if os.path.exists(filepath):
+                    os.remove(filepath)
+            if not result or (isinstance(result, dict) and result.get('error')):
+                logging.error(f'Prediction failed: {result}')
+                return jsonify({'error': result.get('error', 'Unknown error during prediction')}), 500
             logging.info(f'Prediction successful for file: {file.filename} | Result: {result}')
             return jsonify(result)
         else:
@@ -54,7 +63,7 @@ def predict():
             return jsonify({'error': 'Only PDF files are supported'}), 400
     except Exception as e:
         logging.error(f'Unexpected error: {e}')
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
 
 @app.route('/predict_text', methods=['POST'])
 def predict_text():

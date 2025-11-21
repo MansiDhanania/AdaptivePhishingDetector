@@ -159,7 +159,8 @@ def main():
             X, Y = data['embeddings'], data['labels']
             train_loader, val_loader, test_loader = create_dataloaders(X, Y)
             model = FrozenBERTClassifier().to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
-            model, _, _ = train_with_dqn(model, train_loader, val_loader)
+            # Use full DQN+BERT RL training loop
+            model, action_history, reward_history = train_with_dqn(model, train_loader, val_loader, epochs=10)
             torch.save(model.state_dict(), os.path.join(results_dir, "dqn_bert_model.pth"))
         elif args.eval_only:
             eval_data = torch.load(args.eval)
