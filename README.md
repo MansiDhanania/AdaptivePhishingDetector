@@ -1,4 +1,6 @@
 
+# AdaptivePhishingDetector
+
 AdaptivePhishingDetector is a modular pipeline for phishing email detection using reinforcement learning (DQN) to fine-tune BERT. The system is designed for robust generalization to adversarial and imbalanced email datasets, and includes a web app for real-world deployment.
 
 ## Key Features
