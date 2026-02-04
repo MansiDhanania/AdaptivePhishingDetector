@@ -52,3 +52,24 @@ def get_bert_embeddings(texts: list, model_name: str = 'bert-base-uncased', batc
             batch_embeds = outputs.last_hidden_state[:, 0, :].to('cpu')
             embeddings.append(batch_embeds)
     return torch.cat(embeddings)
+
+
+if __name__ == "__main__":
+    import argparse
+    
+    parser = argparse.ArgumentParser(description="Preprocess phishing email data and generate BERT embeddings.")
+    parser.add_argument("--input", required=True, help="Path to input CSV file")
+    parser.add_argument("--output", required=True, help="Path to output .pt file")
+    parser.add_argument("--batch_size", type=int, default=32, help="Batch size for embedding generation")
+    args = parser.parse_args()
+    
+    print(f"Loading data from {args.input}...")
+    X, Y = load_data(args.input)
+    print(f"Loaded {len(X)} samples.")
+    
+    print("Generating BERT embeddings...")
+    embeddings = get_bert_embeddings(X, batch_size=args.batch_size)
+    
+    print(f"Saving embeddings to {args.output}...")
+    torch.save({'embeddings': embeddings, 'labels': Y}, args.output)
+    print("Done!")

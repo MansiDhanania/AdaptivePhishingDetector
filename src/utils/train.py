@@ -31,7 +31,8 @@ def create_dataloaders(
     Y: torch.Tensor,
     batch_size: int = 32,
     val_ratio: float = 0.15,
-    test_ratio: float = 0.15
+    test_ratio: float = 0.15,
+    device=None
 ) -> tuple:
     """
     Create train, validation, and test dataloaders.
@@ -41,6 +42,7 @@ def create_dataloaders(
         batch_size (int): Batch size for training.
         val_ratio (float): Validation split ratio.
         test_ratio (float): Test split ratio.
+        device: Device to use (optional, for API consistency).
     Returns:
         tuple: train_loader, val_loader, test_loader
     """

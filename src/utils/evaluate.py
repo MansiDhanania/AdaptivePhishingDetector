@@ -15,15 +15,18 @@ import numpy as np
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 import time
-def evaluate_accuracy(model: nn.Module, dataloader: torch.utils.data.DataLoader) -> float:
+def evaluate_accuracy(model: nn.Module, dataloader: torch.utils.data.DataLoader, device=None) -> float:
     """
     Evaluate classification accuracy.
     Args:
         model (nn.Module): Trained model.
         dataloader (DataLoader): PyTorch DataLoader.
+        device: Device to use (optional, defaults to CUDA if available).
     Returns:
         float: Accuracy percentage.
     """
+    if device is None:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.eval()
     correct = 0
     total = 0
@@ -105,24 +108,8 @@ def evaluate_model(
         'mcc': mcc,
         'confusion_matrix': cm
     }
-    # ...existing code...
-    # Matthews Correlation Coefficient
-    mcc = matthews_corrcoef(all_labels, all_preds)
-    # ...existing code...
-    # Confusion Matrix
-    cm = confusion_matrix(all_labels, all_preds)
-    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=['Non-Spam', 'Spam'])
-    disp.plot(cmap=plt.cm.Blues)
-    plt.title(f"{model_name} - Confusion Matrix")
-    plt.show()
-    if return_probs:
-        return np.array(all_probs), np.array(all_preds), np.array(all_labels)
-    return {
-        'predictions': all_preds,
-        'labels': all_labels,
-        'mcc': mcc,
-        'confusion_matrix': cm
-    }
+
+
 def plot_curves(labels: np.ndarray, probs: np.ndarray, model_name: str):
     """
     Plot ROC and Precision-Recall curves for model evaluation.
