@@ -30,16 +30,10 @@
 
 ## Reproducibility Checklist
 - [x] All code and scripts are included
-- [x] Datasets and embeddings are documented
+- [x] Datasets and embeddings are documented (CEAS and phishingemail datasets missing)
 - [x] Environment setup instructions provided (see SETUP.md)
 - [x] Results and metrics are reproducible via CLI and web app
 - [x] Experiment modes (train only, eval only, train+eval) are supported
-
-
-## Contact
-- Author: Mansi Dhanania
-- GitHub: [MansiDhanania](https://github.com/MansiDhanania)
-- Email: mansi.dhanania@gmail.com
 
 ---
 
